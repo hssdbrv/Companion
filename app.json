@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Companion",
-    "slug": "Companion",
+    "slug": "companion",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -37,6 +37,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1fadbd0e-f8b9-4a85-9e89-7d89710f8e89"
+      }
+    },
+    "owner": "thehsb"
   }
 }
