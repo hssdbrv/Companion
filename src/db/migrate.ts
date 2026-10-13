@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-const LATEST_VERSION = 1;
+const LATEST_VERSION = 2;
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
   const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
@@ -21,6 +21,11 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     version = 1;
   }
   // if (version === 1) { ...next module's tables...; version = 2; }
-
+  if (version === 1) {
+    await db.execAsync(
+        'ALTER TABLE guests ADD COLUMN attended INTEGER NOT NULL DEFAULT 1;',
+    );
+  version = 2;
+}
   await db.execAsync(`PRAGMA user_version = ${LATEST_VERSION}`);
 }

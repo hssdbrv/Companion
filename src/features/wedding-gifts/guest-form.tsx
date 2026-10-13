@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  KeyboardAvoidingView, Modal, Pressable, StyleSheet, TextInput, View,
+  KeyboardAvoidingView,Switch, Modal, Pressable, StyleSheet, TextInput, View,
 } from 'react-native';
 
 import { Button } from '@/components/button';
@@ -22,6 +22,8 @@ export function GuestForm({ initial, onSubmit, onClose }: Props) {
   const [amount, setAmount] = useState(initial ? String(initial.amount) : '');
   const [note, setNote] = useState(initial?.note ?? '');
   const [saving, setSaving] = useState(false);
+  const [attended, setAttended] = useState(initial ? !!initial.attended : true);
+
 
   const inputStyle = [
     styles.input,
@@ -31,7 +33,7 @@ export function GuestForm({ initial, onSubmit, onClose }: Props) {
   const save = async () => {
     if (!name.trim()) return;
     setSaving(true);
-    await onSubmit({ name: name.trim(), amount: parseAmount(amount), note: note.trim() });
+    await onSubmit({ name: name.trim(), amount: parseAmount(amount), note: note.trim(), attended });
     setSaving(false);
     onClose();
   };
@@ -65,6 +67,10 @@ export function GuestForm({ initial, onSubmit, onClose }: Props) {
             value={note}
             onChangeText={setNote}
           />
+          <View style={styles.switchRow}>
+            <ThemedText>Attended</ThemedText>
+            <Switch value={attended} onValueChange={setAttended} trackColor={{ true: theme.accent }} />
+          </View>
           <Button title="Save" size="lg" fullWidth loading={saving} onPress={save} />
         </View>
       </KeyboardAvoidingView>
@@ -81,4 +87,5 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
   },
   input: { height: 52, borderRadius: 16, paddingHorizontal: Spacing.three, fontSize: 16 },
+  switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });

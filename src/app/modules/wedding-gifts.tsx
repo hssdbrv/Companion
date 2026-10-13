@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Share, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -8,9 +8,9 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatAmount } from '@/features/wedding-gifts/format';
 import { GuestForm } from '@/features/wedding-gifts/guest-form';
 import { type Guest, useGuests } from '@/features/wedding-gifts/use-guests';
+import { formatAmount, guestsToCsv } from '@/features/wedding-gifts/format';
 
 export default function WeddingGifts() {
   const theme = useTheme();
@@ -19,10 +19,20 @@ export default function WeddingGifts() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Guest | null>(null);
   const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<'all' | 'yes' | 'no'>('all');
+
 
   const q = query.trim().toLowerCase();
-  const visible = q ? guests.filter((g) => g.name.toLowerCase().includes(q)) : guests;
+  const visible = guests.filter(
+    (g) =>
+        (filter === 'all' || (filter === 'yes') === !!g.attended) &&
+        (!q || g.name.toLowerCase().includes(q)),
+  );
+const attendedCount = guests.filter((g) => g.attended).length;
 
+const exportCsv = () => {
+  if (guests.length) Share.share({ message: guestsToCsv(guests) });
+};
   const openForm = (guest: Guest | null) => {
     setEditing(guest);
     setFormOpen(true);
@@ -36,7 +46,14 @@ export default function WeddingGifts() {
 
   return (
     <ThemedView style={styles.flex}>
-      <Stack.Screen options={{ title: 'Wedding gifts' }} />
+      <Stack.Screen options={{
+          title: 'Wedding gifts',
+          headerRight: () => (
+            <Pressable onPress={exportCsv} hitSlop={12}>
+                <ThemedText type="smallBold">Export</ThemedText>
+            </Pressable>
+            ),
+          }} />
 
       <FlatList
         data={visible}
@@ -47,7 +64,7 @@ export default function WeddingGifts() {
           <View style={styles.header}>
             <View style={[styles.summary, { backgroundColor: theme.accent }]}>
               <ThemedText type="small" style={{ color: theme.onAccent, opacity: 0.8 }}>
-                Total gifts · {guests.length} guests
+                Total gifts · {attendedCount}/{guests.length} attended
               </ThemedText>
               <ThemedText type="subtitle" style={{ color: theme.onAccent }}>
                 {formatAmount(total)} Toman
@@ -60,6 +77,18 @@ export default function WeddingGifts() {
               value={query}
               onChangeText={setQuery}
             />
+            <View style={styles.chips}>
+                {(['all', 'yes', 'no'] as const).map((f) => (
+                    <Pressable
+                        key={f}
+                        onPress={() => setFilter(f)}
+                        style={[styles.chip, { backgroundColor: filter === f ? theme.accent : theme.backgroundElement }]}>
+                        <ThemedText type="small" style={{ color: filter === f ? theme.onAccent : theme.text }}>
+                            {f === 'all' ? 'All' : f === 'yes' ? 'Attended' : 'Absent'}
+                        </ThemedText>
+                    </Pressable>
+                ))}
+            </View>
           </View>
         }
         ListEmptyComponent={
@@ -74,11 +103,11 @@ export default function WeddingGifts() {
             style={[styles.row, { backgroundColor: theme.backgroundElement }]}>
             <View style={styles.flex}>
               <ThemedText type="smallBold">{item.name}</ThemedText>
-              {item.note ? (
-                <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-                  {item.note}
-                </ThemedText>
-              ) : null}
+                {!item.attended || item.note ? (
+                    <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+                        {[!item.attended && 'Did not attend', item.note].filter(Boolean).join(' · ')}
+                    </ThemedText>
+                ) : null}
             </View>
             <ThemedText type="smallBold">{formatAmount(item.amount)}</ThemedText>
           </Pressable>
@@ -118,4 +147,6 @@ const styles = StyleSheet.create({
   },
   empty: { textAlign: 'center', marginTop: Spacing.five },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: Spacing.three },
+  chips: { flexDirection: 'row', gap: Spacing.two },
+  chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: 999 },
 });
