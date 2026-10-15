@@ -97,7 +97,14 @@ export default function Relatives() {
       </View>
 
       {formOpen && (
-        <RelativeForm onSubmit={addRelative} onClose={() => setFormOpen(false)} />
+        <RelativeForm
+          onSubmit={async (input) => {
+            const newId = await addRelative(input);
+            setFormOpen(false);
+            open(newId);
+          }}
+          onClose={() => setFormOpen(false)}
+        />
       )}
     </ThemedView>
   );

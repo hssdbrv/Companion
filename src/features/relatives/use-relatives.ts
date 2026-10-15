@@ -2,13 +2,17 @@ import { useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 
-import type { RelationType } from './format';
+import type { RelationType, Sex } from './format';
 
 export type Relative = {
   id: number;
-  name: string;
+  name: string; // full name, kept in sync as "first last"
+  first_name: string;
+  last_name: string;
   birth_year: number | null;
   deceased: number; // 1 = passed away
+  sex: Sex | null;
+  is_head: number; // 1 = head of the family
 };
 
 export type Relation = { id: number; a_id: number; b_id: number; type: RelationType };
@@ -17,10 +21,16 @@ export type Relation = { id: number; a_id: number; b_id: number; type: RelationT
 export type WeddingInfo = { amount: number; attended: number; note: string | null };
 
 export type RelativeInput = {
-  name: string;
+  firstName: string;
+  lastName: string;
   birthYear: number | null;
   deceased: boolean;
+  sex: Sex | null;
+  isHead: boolean;
 };
+
+const fullName = (g: Pick<RelativeInput, 'firstName' | 'lastName'>) =>
+  `${g.firstName} ${g.lastName}`.trim();
 
 export function useRelatives() {
   const db = useSQLiteContext();
@@ -32,7 +42,7 @@ export function useRelatives() {
   const refresh = useCallback(async () => {
     const [people, links, gifts] = await Promise.all([
       db.getAllAsync<Relative>(
-        'SELECT id, name, birth_year, deceased FROM relatives ORDER BY name COLLATE NOCASE',
+        'SELECT id, name, first_name, last_name, birth_year, deceased, sex, is_head FROM relatives ORDER BY name COLLATE NOCASE',
       ),
       db.getAllAsync<Relation>('SELECT id, a_id, b_id, type FROM relations'),
       db.getAllAsync<WeddingInfo & { relative_id: number }>(
@@ -56,18 +66,20 @@ export function useRelatives() {
     }, [refresh]),
   );
 
-  const addRelative = async (g: RelativeInput) => {
-    await db.runAsync(
-      'INSERT INTO relatives (name, birth_year, deceased) VALUES (?, ?, ?)',
-      g.name, g.birthYear, g.deceased ? 1 : 0,
+  /** Inserts a relative and returns the new id. */
+  const addRelative = async (g: RelativeInput): Promise<number> => {
+    const res = await db.runAsync(
+      'INSERT INTO relatives (name, first_name, last_name, birth_year, deceased, sex, is_head) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      fullName(g), g.firstName, g.lastName, g.birthYear, g.deceased ? 1 : 0, g.sex, g.isHead ? 1 : 0,
     );
     await refresh();
+    return res.lastInsertRowId;
   };
 
   const updateRelative = async (id: number, g: RelativeInput) => {
     await db.runAsync(
-      'UPDATE relatives SET name = ?, birth_year = ?, deceased = ? WHERE id = ?',
-      g.name, g.birthYear, g.deceased ? 1 : 0, id,
+      'UPDATE relatives SET name = ?, first_name = ?, last_name = ?, birth_year = ?, deceased = ?, sex = ?, is_head = ? WHERE id = ?',
+      fullName(g), g.firstName, g.lastName, g.birthYear, g.deceased ? 1 : 0, g.sex, g.isHead ? 1 : 0, id,
     );
     await refresh();
   };

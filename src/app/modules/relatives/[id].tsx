@@ -8,7 +8,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { Avatar } from '@/features/relatives/avatar';
-import { ageOf } from '@/features/relatives/format';
+import { ageOf, relationLabel, SEX_LABEL } from '@/features/relatives/format';
 import { formatAmount } from '@/features/wedding-gifts/format';
 import { RelationPicker } from '@/features/relatives/relation-picker';
 import { RelativeForm } from '@/features/relatives/relative-form';
@@ -73,9 +73,11 @@ export default function RelativeDetail() {
   const age = person.deceased ? null : ageOf(person.birth_year);
   const gift = wedding[person.id];
   const info: [string, string][] = [
+    ['Sex', person.sex ? SEX_LABEL[person.sex] : 'Not set'],
     ['Age', age !== null ? String(age) : '—'],
     ['Born', person.birth_year ? String(person.birth_year) : 'Unknown'],
     ['Status', person.deceased ? 'Passed away' : 'Alive'],
+    ['Head of family', person.is_head ? 'Yes' : 'No'],
     ['Wedding', gift ? (gift.attended ? 'Attended' : 'Did not attend') : 'No record yet'],
   ];
   if (gift) info.push(['Gift', `${formatAmount(gift.amount)} Toman`]);
@@ -125,6 +127,11 @@ export default function RelativeDetail() {
           <ThemedText type="subtitle" style={styles.name}>
             {person.name}
           </ThemedText>
+          {person.is_head ? (
+            <ThemedText type="smallBold" style={{ color: theme.accent }}>
+              Head of family
+            </ThemedText>
+          ) : null}
         </View>
 
         <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
@@ -156,9 +163,12 @@ export default function RelativeDetail() {
                   onPress={() => open(item.person.id)}
                   style={[styles.row, { backgroundColor: theme.backgroundElement }]}>
                   <Avatar id={item.person.id} name={item.person.name} size={36} />
-                  <ThemedText type="smallBold" style={styles.flex}>
-                    {item.person.name}
-                  </ThemedText>
+                  <View style={styles.flex}>
+                    <ThemedText type="smallBold">{item.person.name}</ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {relationLabel(key, item.person.sex)}
+                    </ThemedText>
+                  </View>
                   <Pressable onPress={() => confirmRemoveRelation(item)} hitSlop={12}>
                     <ThemedText themeColor="textSecondary">✕</ThemedText>
                   </Pressable>

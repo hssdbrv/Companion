@@ -1,16 +1,8 @@
+import { Host, Switch } from '@expo/ui';
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  TextInput,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
+import { AppSheet } from '@/components/app-sheet';
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -31,7 +23,6 @@ type Mode = 'relative' | 'other';
 
 export function GuestForm({ initial, relatives, onSubmit, onClose }: Props) {
   const theme = useTheme();
-  const { height } = useWindowDimensions();
 
   const [mode, setMode] = useState<Mode>(
     initial ? (initial.relative_id !== null ? 'relative' : 'other') : relatives.length ? 'relative' : 'other',
@@ -53,7 +44,7 @@ export function GuestForm({ initial, relatives, onSubmit, onClose }: Props) {
     { backgroundColor: theme.backgroundElement, color: theme.text },
   ];
 
-  const save = async () => {
+  const save = async (close: () => void) => {
     const guestName = mode === 'relative' ? chosen?.name : name.trim();
     if (!guestName) return;
     setSaving(true);
@@ -65,20 +56,20 @@ export function GuestForm({ initial, relatives, onSubmit, onClose }: Props) {
       relativeId: mode === 'relative' ? relativeId : null,
     });
     setSaving(false);
-    onClose();
+    close();
   };
 
   return (
-    <Modal transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose} />
-      <KeyboardAvoidingView behavior="padding">
-        <View style={[styles.sheet, { backgroundColor: theme.background }]}>
+    <AppSheet onClose={onClose}>
+      {(close) => (
+        <>
           <ThemedText type="subtitle">{initial ? 'Edit gift' : 'New gift'}</ThemedText>
 
           <ScrollView
-            style={{ maxHeight: height * 0.6 }}
+            style={styles.flex}
             contentContainerStyle={styles.form}
-            keyboardShouldPersistTaps="handled">
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled>
             <View style={styles.chips}>
               {(['relative', 'other'] as const).map((m) => {
                 const on = mode === m;
@@ -160,39 +151,29 @@ export function GuestForm({ initial, relatives, onSubmit, onClose }: Props) {
               value={note}
               onChangeText={setNote}
             />
-            <View style={styles.switchRow}>
-              <ThemedText>Attended</ThemedText>
-              <Switch
-                value={attended}
-                onValueChange={setAttended}
-                trackColor={{ true: theme.accent }}
-              />
-            </View>
-          </ScrollView>
+            <Host matchContents={{ vertical: true }} style={styles.fullWidth}>
+              <Switch label="Attended" value={attended} onValueChange={setAttended} />
+            </Host>
 
-          <Button
-            title="Save"
-            size="lg"
-            fullWidth
-            loading={saving}
-            disabled={mode === 'relative' ? !chosen : !name.trim()}
-            onPress={save}
-          />
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+            <Button
+              title="Save"
+              size="lg"
+              fullWidth
+              loading={saving}
+              disabled={mode === 'relative' ? !chosen : !name.trim()}
+              onPress={() => save(close)}
+            />
+          </ScrollView>
+        </>
+      )}
+    </AppSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
-  sheet: {
-    padding: Spacing.four,
-    gap: Spacing.three,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-  },
-  form: { gap: Spacing.three },
+  flex: { flex: 1 },
+  // extra bottom space lets every field be scrolled above the keyboard
+  form: { gap: Spacing.three, paddingBottom: 280 },
   chips: { flexDirection: 'row', gap: Spacing.two },
   chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: 999 },
   input: { height: 52, borderRadius: 16, paddingHorizontal: Spacing.three, fontSize: 16 },
@@ -205,5 +186,5 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 2,
   },
-  switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  fullWidth: { width: '100%' },
 });

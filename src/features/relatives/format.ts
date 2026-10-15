@@ -1,5 +1,26 @@
 export type RelationType = 'parent' | 'spouse' | 'sibling' | 'cousin';
 
+export type Sex = 'male' | 'female';
+
+export const SEX_LABEL: Record<Sex, string> = { male: 'Male', female: 'Female' };
+
+export type RelationGroup = 'parents' | 'spouse' | 'children' | 'siblings' | 'cousins';
+
+// [male, female, unknown]
+const GENDERED: Record<RelationGroup, [string, string, string]> = {
+  parents: ['Father', 'Mother', 'Parent'],
+  spouse: ['Husband', 'Wife', 'Spouse'],
+  children: ['Son', 'Daughter', 'Child'],
+  siblings: ['Brother', 'Sister', 'Sibling'],
+  cousins: ['Cousin', 'Cousin', 'Cousin'],
+};
+
+/** Label for how `other` relates to the person whose page we are on. */
+export function relationLabel(group: RelationGroup, sex: string | null): string {
+  const [male, female, neutral] = GENDERED[group];
+  return sex === 'male' ? male : sex === 'female' ? female : neutral;
+}
+
 export type RelationOption = {
   key: string;
   label: string;
@@ -40,11 +61,18 @@ export function ageOf(birthYear: number | null): number | null {
   return Math.max(0, new Date().getFullYear() - birthYear);
 }
 
-export function subtitleOf(r: { birth_year: number | null; deceased: number }): string {
+export function subtitleOf(r: {
+  birth_year: number | null;
+  deceased: number;
+  sex: Sex | null;
+  is_head: number;
+}): string {
   const parts: string[] = [];
+  if (r.sex) parts.push(SEX_LABEL[r.sex]);
   if (r.deceased) parts.push('Passed away');
   if (r.birth_year) {
     parts.push(r.deceased ? `Born ${r.birth_year}` : `${ageOf(r.birth_year)} years old`);
   }
+  if (r.is_head) parts.push('Head of family');
   return parts.join(' · ');
 }

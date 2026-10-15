@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-const LATEST_VERSION = 4;
+const LATEST_VERSION = 6;
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
   const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
@@ -58,6 +58,29 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       CREATE UNIQUE INDEX idx_guests_relative ON guests(relative_id) WHERE relative_id IS NOT NULL;
     `);
     version = 4;
+  }
+
+  // v5: sex and head-of-family flag for relatives
+  if (version === 4) {
+    await db.execAsync(`
+      ALTER TABLE relatives ADD COLUMN sex TEXT;
+      ALTER TABLE relatives ADD COLUMN is_head INTEGER NOT NULL DEFAULT 0;
+    `);
+    version = 5;
+  }
+
+  // v6: separate first / last name (`name` stays as the full name)
+  if (version === 5) {
+    await db.execAsync(`
+      ALTER TABLE relatives ADD COLUMN first_name TEXT NOT NULL DEFAULT '';
+      ALTER TABLE relatives ADD COLUMN last_name TEXT NOT NULL DEFAULT '';
+      UPDATE relatives SET
+        first_name = CASE WHEN instr(name, ' ') > 0
+          THEN substr(name, 1, instr(name, ' ') - 1) ELSE name END,
+        last_name = CASE WHEN instr(name, ' ') > 0
+          THEN trim(substr(name, instr(name, ' ') + 1)) ELSE '' END;
+    `);
+    version = 6;
   }
 
   await db.execAsync(`PRAGMA user_version = ${LATEST_VERSION}`);
