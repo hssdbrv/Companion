@@ -19,12 +19,12 @@ export const MODULES: AppModule[] = [
     href: '/modules/wedding-gifts',
   },
   {
-      id: 'relative-management',
-      title: 'Relatives Management',
-      subtitle: 'Manage relatives and their relationships',
-      emoji: '',
-      tint: '#55ABD4',
-      href: '/modules/index'
-  }
+    id: 'relatives',
+    title: 'Relatives',
+    subtitle: 'Family & relationships',
+    emoji: '👨‍👩‍👧‍👦',
+    tint: '#55ABD4',
+    href: '/modules/relatives',
+  },
   // add more here, e.g. { id: 'notes', title: 'Notes', ... href: '/modules/notes' }
 ];
