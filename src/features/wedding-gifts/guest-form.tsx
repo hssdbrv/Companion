@@ -154,16 +154,16 @@ export function GuestForm({ initial, relatives, onSubmit, onClose }: Props) {
             <Host matchContents={{ vertical: true }} style={styles.fullWidth}>
               <Switch label="Attended" value={attended} onValueChange={setAttended} />
             </Host>
-
-            <Button
-              title="Save"
-              size="lg"
-              fullWidth
-              loading={saving}
-              disabled={mode === 'relative' ? !chosen : !name.trim()}
-              onPress={() => save(close)}
-            />
           </ScrollView>
+
+          <Button
+            title="Save"
+            size="lg"
+            fullWidth
+            loading={saving}
+            disabled={mode === 'relative' ? !chosen : !name.trim()}
+            onPress={() => save(close)}
+          />
         </>
       )}
     </AppSheet>
@@ -172,8 +172,7 @@ export function GuestForm({ initial, relatives, onSubmit, onClose }: Props) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  // extra bottom space lets every field be scrolled above the keyboard
-  form: { gap: Spacing.three, paddingBottom: 280 },
+  form: { gap: Spacing.three },
   chips: { flexDirection: 'row', gap: Spacing.two },
   chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: 999 },
   input: { height: 52, borderRadius: 16, paddingHorizontal: Spacing.three, fontSize: 16 },

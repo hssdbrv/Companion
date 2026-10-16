@@ -49,97 +49,96 @@ export function RelationPicker({ person, others, onSubmit, onClose }: Props) {
   return (
     <AppSheet onClose={onClose}>
       {(close) => (
-        <FlatList
-          data={visible}
-          keyExtractor={(r) => String(r.id)}
-          style={styles.flex}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-          nestedScrollEnabled
-          extraData={selected}
-          ListHeaderComponent={
-            <View style={styles.header}>
-              <ThemedText type="subtitle">Add relationship</ThemedText>
+        <>
+          {/* fixed part: nothing here scrolls */}
+          <ThemedText type="subtitle">Add relationship</ThemedText>
 
-              <View style={styles.chips}>
-                {RELATION_OPTIONS.map((o) => {
-                  const on = o.key === optionKey;
-                  return (
-                    <Pressable
-                      key={o.key}
-                      onPress={() => setOptionKey(o.key)}
-                      style={[
-                        styles.chip,
-                        { backgroundColor: on ? theme.accent : theme.backgroundElement },
-                      ]}>
-                      <ThemedText type="small" style={{ color: on ? theme.onAccent : theme.text }}>
-                        {o.label}
-                      </ThemedText>
-                    </Pressable>
-                  );
-                })}
-              </View>
+          <View style={styles.chips}>
+            {RELATION_OPTIONS.map((o) => {
+              const on = o.key === optionKey;
+              return (
+                <Pressable
+                  key={o.key}
+                  onPress={() => setOptionKey(o.key)}
+                  style={[
+                    styles.chip,
+                    { backgroundColor: on ? theme.accent : theme.backgroundElement },
+                  ]}>
+                  <ThemedText type="small" style={{ color: on ? theme.onAccent : theme.text }}>
+                    {o.label}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </View>
 
-              <ThemedText themeColor="textSecondary">
-                {person.name} is {option.label.toLowerCase()} {chosenNames || '…'}
+          <ThemedText themeColor="textSecondary">
+            {person.name} is {option.label.toLowerCase()} {chosenNames || '…'}
+          </ThemedText>
+
+          {others.length === 0 ? (
+            <ThemedText themeColor="textSecondary">
+              Add more relatives first, then link them here.
+            </ThemedText>
+          ) : (
+            <>
+              <TextInput
+                style={[
+                  styles.search,
+                  { backgroundColor: theme.backgroundElement, color: theme.text },
+                ]}
+                placeholder="Search people"
+                placeholderTextColor={theme.textSecondary}
+                value={query}
+                onChangeText={setQuery}
+              />
+              <ThemedText type="small" themeColor="textSecondary">
+                Tap to select one or more people
               </ThemedText>
 
-              {others.length === 0 ? (
-                <ThemedText themeColor="textSecondary">
-                  Add more relatives first, then link them here.
-                </ThemedText>
-              ) : (
-                <>
-                  <TextInput
-                    style={[
-                      styles.search,
-                      { backgroundColor: theme.backgroundElement, color: theme.text },
-                    ]}
-                    placeholder="Search people"
-                    placeholderTextColor={theme.textSecondary}
-                    value={query}
-                    onChangeText={setQuery}
-                  />
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Tap to select one or more people
-                  </ThemedText>
-                </>
-              )}
-            </View>
-          }
-          renderItem={({ item }) => {
-            const on = selected.includes(item.id);
-            return (
-              <Pressable
-                onPress={() => toggle(item.id)}
-                style={[
-                  styles.row,
-                  {
-                    backgroundColor: theme.backgroundElement,
-                    borderColor: on ? theme.accent : 'transparent',
-                  },
-                ]}>
-                <Avatar id={item.id} name={item.name} size={36} />
-                <ThemedText type="smallBold" style={styles.flex}>
-                  {item.name}
-                </ThemedText>
-                {on ? <ThemedText style={{ color: theme.accent }}>✓</ThemedText> : null}
-              </Pressable>
-            );
-          }}
-          ListFooterComponent={
-            <View style={styles.footer}>
-              <Button
-                title={selected.length > 1 ? `Save (${selected.length})` : 'Save'}
-                size="lg"
-                fullWidth
-                loading={saving}
-                disabled={selected.length === 0}
-                onPress={() => save(close)}
+              {/* only this list scrolls */}
+              <FlatList
+                data={visible}
+                keyExtractor={(r) => String(r.id)}
+                style={styles.list}
+                contentContainerStyle={styles.listContent}
+                keyboardShouldPersistTaps="handled"
+                nestedScrollEnabled
+                extraData={selected}
+                renderItem={({ item }) => {
+                  const on = selected.includes(item.id);
+                  return (
+                    <Pressable
+                      onPress={() => toggle(item.id)}
+                      style={[
+                        styles.row,
+                        {
+                          backgroundColor: theme.backgroundElement,
+                          borderColor: on ? theme.accent : 'transparent',
+                        },
+                      ]}>
+                      <Avatar id={item.id} name={item.name} size={36} />
+                      <ThemedText type="smallBold" style={styles.flex}>
+                        {item.name}
+                      </ThemedText>
+                      {on ? <ThemedText style={{ color: theme.accent }}>✓</ThemedText> : null}
+                    </Pressable>
+                  );
+                }}
               />
-            </View>
-          }
-        />
+            </>
+          )}
+
+          {/* pinned footer */}
+          <Button
+            title={selected.length > 1 ? `Save (${selected.length})` : 'Save'}
+            size="lg"
+            fullWidth
+            loading={saving}
+            disabled={selected.length === 0}
+            onPress={() => save(close)}
+          />
+        </>
       )}
     </AppSheet>
   );
@@ -147,13 +146,11 @@ export function RelationPicker({ person, others, onSubmit, onClose }: Props) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  // extra bottom space lets the list scroll above the keyboard
-  content: { gap: Spacing.two, paddingBottom: 280 },
-  header: { gap: Spacing.three, marginBottom: Spacing.one },
-  footer: { marginTop: Spacing.two },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: 999 },
   search: { height: 48, borderRadius: 16, paddingHorizontal: Spacing.three, fontSize: 16 },
+  list: { flex: 1 },
+  listContent: { gap: Spacing.two },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

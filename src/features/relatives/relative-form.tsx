@@ -142,16 +142,16 @@ export function RelativeForm({ initial, onSubmit, onClose }: Props) {
             <Host matchContents={{ vertical: true }} style={styles.fullWidth}>
               <Switch label="Head of family" value={isHead} onValueChange={setIsHead} />
             </Host>
-
-            <Button
-              title="Save"
-              size="lg"
-              fullWidth
-              loading={saving}
-              disabled={!firstName.trim()}
-              onPress={() => save(close)}
-            />
           </ScrollView>
+
+          <Button
+            title="Save"
+            size="lg"
+            fullWidth
+            loading={saving}
+            disabled={!firstName.trim()}
+            onPress={() => save(close)}
+          />
         </>
       )}
     </AppSheet>
@@ -160,8 +160,7 @@ export function RelativeForm({ initial, onSubmit, onClose }: Props) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  // extra bottom space lets every field be scrolled above the keyboard
-  form: { gap: Spacing.three, paddingBottom: 280 },
+  form: { gap: Spacing.three },
   input: { height: 52, borderRadius: 16, paddingHorizontal: Spacing.three, fontSize: 16 },
   field: { gap: Spacing.one },
   chips: { flexDirection: 'row', gap: Spacing.two },
